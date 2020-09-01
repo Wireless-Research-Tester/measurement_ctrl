@@ -278,7 +278,7 @@ def data_to_mem(model):
 
 def display_mem(model):
     commands = {
-        Model.HP_8753D: 'DISPMEMO',
+        Model.HP_8753D: 'DISPDATM',
     }
     return commands.get(model)
 

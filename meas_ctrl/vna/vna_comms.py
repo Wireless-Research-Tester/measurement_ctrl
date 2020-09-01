@@ -37,7 +37,6 @@ class session:
         return 0
 
     def reset(self):  # resets only measurement parameters changed in setup (do not wipe calibration data!)
-        # if isinstance(self.freq, list):
         self.vna.write(find_command(self.model, Action.CLEAR_LIST))
 
     def setup(self, freq, avg, bw):
@@ -67,11 +66,11 @@ class session:
     def get_data(self, theta, phi, data_type):
         temp_data_set = []
 
+        self.vna.write(find_command(self.model, Action.DISPLAY_MEM))
         self.vna.write(find_command(self.model, Action.POLAR))
         self.vna.write(find_command(self.model, Action.POLAR_LOG_MARKER))
         self.vna.write(find_command(self.model, Action.AUTO_SCALE))
         self.vna.write(find_command(self.model, Action.DATA_TO_MEM))
-        self.vna.write(find_command(self.model, Action.DISPLAY_MEM))
         self.vna.write(find_command(self.model, Action.OUTPUT_FORMATTED_DATA))
         if isinstance(self.freq, list):
             for i in range(0, len(self.freq)):
