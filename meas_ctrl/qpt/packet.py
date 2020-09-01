@@ -105,7 +105,6 @@ def get_status():
 
     return: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 31 00 00 00 00 00 31 03')
     return STATIC_TX['GET_STATUS']
 
 
@@ -152,7 +151,6 @@ def stop():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 31 1b 82 00 00 00 00 33 03')
     return STATIC_TX['STOP']
 
 
@@ -213,7 +211,6 @@ def move_to_absolute_zero():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 35 35 03')
     return STATIC_TX['MOVE_TO_ABSOLUTE_ZERO']
 
 
@@ -223,7 +220,6 @@ def get_angle_correction():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 70 70 03')
     return STATIC_TX['GET_ANGLE_CORRECTION']
 
 
@@ -295,7 +291,6 @@ def align_angles_to_center():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 82 82 03')
     return STATIC_TX['ALIGN_ANGLES_TO_CENTER']
 
 
@@ -306,7 +301,6 @@ def clear_angle_correction():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 84 84 03')
     return STATIC_TX['CLEAR_ANGLE_CORRECTION']
 
 
@@ -325,7 +319,6 @@ def set_center_position():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 91 91 03')
     return STATIC_TX['SET_CENTER_POSITION']
 
 
@@ -336,7 +329,6 @@ def get_minimum_speeds():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 92 92 03')
     return STATIC_TX['GET_MINIMUM_SPEEDS']
 
 
@@ -389,7 +381,6 @@ def get_maximum_speeds():
 
     returns: Packet that is ready to transmit.
     """
-    # return bytes.fromhex('02 98 98 03')
     return STATIC_TX['GET_MAXIMUM_SPEEDS']
 
 

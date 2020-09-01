@@ -45,10 +45,10 @@ class Comms:
         rx = self.positioner_query(pkt.get_status())
         while tries < self._LIMIT and rx == None:
             rx = self.positioner_query(pkt.get_status())
+            tries = tries + 1
         if rx == None:
             return False
-        else:
-            return True
+        return True
 
     def positioner_query(self, msg):
         self.comms.write_raw(msg)
@@ -126,11 +126,20 @@ class Positioner:
 
         # Initialize positioner properties and status
         self.update_positioner_stats()
-        # self.print_curr()
+
+        # Jog speed limits
+        self.MAX_PAN_TIME = 1240
+        self.MIN_PAN_SPEED = 8
+        self.MAX_PAN_SPEED = 127
+
+        self.MAX_TILT_TIME = 700
+        self.MIN_TILT_SPEED = 17
+        self.MAX_TILT_SPEED = 127
+
 
     def move_to(self, pan, tilt, move_type='stop'):
         self.p.parse(self.comms.positioner_query(pkt.set_minimum_speeds(40,40)),self)
-
+        
         if move_type == 'abs':
             coord = qi.Coordinate(pan,tilt)
             self.p.parse(self.comms.positioner_query(pkt.move_to_entered_coords(coord)),self)
@@ -168,16 +177,11 @@ class Positioner:
             self.move_to(0,0,'stop')
 
     def jog_ccw(self, pan_speed, target):
-        p = Parser()
-        rx = self.comms.positioner_query(pkt.get_status())
-        p.parse(rx, self)
-
-        while self.curr_position.pan_angle() > target.pan_angle():
+        if self.curr_position.pan_angle() > target.pan_angle():
             rx = self.comms.positioner_query(pkt.jog_positioner(pan_speed, 0, 0, 0))
-            p.parse(rx, self)
-            time.sleep(.08)
-
-        p.parse(self.comms.positioner_query(pkt.get_status()), self)
+            self.p.parse(rx, self)
+        else:
+            self.move_to(0,0,'stop')
 
     def jog_up(self, tilt_speed, target):
         if self.curr_position.tilt_angle() < target.tilt_angle():
@@ -187,16 +191,11 @@ class Positioner:
             self.move_to(0,0,'stop')
             
     def jog_down(self, tilt_speed, target):
-        p = Parser()
-        rx = self.comms.positioner_query(pkt.get_status())
-        p.parse(rx, self)
-        
-        while self.curr_position.tilt_angle() > target.tilt_angle():
+        if self.curr_position.tilt_angle() > target.tilt_angle():
             rx = self.comms.positioner_query(pkt.jog_positioner(0, 0, tilt_speed, 0))
-            p.parse(rx, self)
-            time.sleep(.08)
-
-        p.parse(self.comms.positioner_query(pkt.get_status()), self)
+            self.p.parse(rx, self)
+        else:
+            self.move_to(0,0,'stop')
 
     def print_curr(self):
         with self.curr_lock:
@@ -215,8 +214,5 @@ class Positioner:
         self.p.parse(self.comms.positioner_query(pkt.get_minimum_speeds()), self)
         self.p.parse(self.comms.positioner_query(pkt.get_set_communication_timeout(True,0)), self)
         self.p.parse(self.comms.positioner_query(pkt.get_maximum_speeds()), self)
-
-    def print_positioner_stats(self):
-        print('General Properties:\n')
 """End QPT_Positioner Class"""
 
