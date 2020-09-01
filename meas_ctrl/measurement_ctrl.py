@@ -2,10 +2,8 @@ import vna.vna_comms as vna_comms
 import qpt.positioner as positioner
 from qpt.integer import Coordinate
 import data.data_storage as data_storage
-from qpt.packet_parser import Parser
 from time import sleep
 from threading import Lock, Thread
-
 
 
 class meas_ctrl:
@@ -21,6 +19,7 @@ class meas_ctrl:
             const_angle=0, 
             resolution=5, 
             file='data\\data0.csv'):
+    
         self.impedance = impedance # if true, S11 and S21 will be measured. Else, only S21
         self.freq = freq # list or vna_comms.lin_freq obj
         self.cal = cal # true or false
@@ -36,16 +35,9 @@ class meas_ctrl:
         self.vna_avg_delay = 0
         self.vna_S11_delay = 0
         self.vna_S21_delay = 0
-        self.MAX_PAN_TIME = 1240
-        self.MAX_TILT_TIME = 700
-        self.MIN_PAN_SPEED = 8
-        self.MIN_TILT_SPEED = 17
-        self.MAX_PAN_SPEED = 127
-        self.MAX_TILT_SPEED = 127
         self.pan_speed = 0
         self.tilt_speed = 0
         self.vna_lock = Lock()
-        self.p = Parser()
         self.file = file
 
     def setup(self):
@@ -96,6 +88,9 @@ class meas_ctrl:
                     self.progress = (i+1) * self.resolution / 360
                     if self.is_step_pan_complete() is True:
                         break
+                    else:
+                        target = ((i+1) * self.resolution) - 180
+                        self.qpt.move_to(target, self.const_angle, 'abs')
             # Tilt Case
             else:
                 for i in range(0, int(180/self.resolution) + 1):
@@ -104,6 +99,9 @@ class meas_ctrl:
                     self.progress = (i+1) * self.resolution / 180
                     if self.is_step_tilt_complete() is True:
                         break
+                    else:
+                        target = ((i+1) * self.resolution) - 90
+                        self.qpt.move_to(self.const_angle, target, 'abs')
 
         # Continuous Case
         else:
@@ -122,7 +120,10 @@ class meas_ctrl:
                     self.record_data('S21', self.file)
                     self.progress = (target + 180) / 360
                     if self.is_continuous_pan_complete() is True:
+                        self.halt()
                         break
+                    else:
+                        self.qpt.jog_cw(self.pan_speed, Coordinate(180,0))
             # Tilt Case
             else:
                 self.init_continuous_sweep()
@@ -138,7 +139,10 @@ class meas_ctrl:
                     self.record_data('S21', self.file)
                     self.progress = (target + 90) / 180
                     if self.is_continuous_tilt_complete() is True:
-                        break                    
+                        self.halt()
+                        break
+                    else:
+                        self.qpt.jog_up(self.tilt_speed, Coordinate(0,90))              
 
 
     def halt(self):
@@ -166,14 +170,12 @@ class meas_ctrl:
     def is_step_pan_complete(self):
         if self.progress > 1:
             return True
-        self.qpt.move_to(self.resolution, 0, 'delta')
         return False
 
 
     def is_step_tilt_complete(self):
         if self.progress > 1:
             return True
-        self.qpt.move_to(0, self.resolution, 'delta')
         return False
 
 
@@ -196,17 +198,13 @@ class meas_ctrl:
 
     def is_continuous_pan_complete(self):
         if self.progress >= 1:
-            self.halt()
             return True
-        self.qpt.jog_cw(self.pan_speed, Coordinate(180,0))
         return False
 
 
     def is_continuous_tilt_complete(self):
         if self.progress >= 1:
-            self.halt()
             return True
-        self.qpt.jog_up(self.tilt_speed, Coordinate(0,90))
         return False
 
 
@@ -258,19 +256,19 @@ class meas_ctrl:
 
     def compute_pan_speed(self, total_time):
         pan_speed = ((12.8866*(360.0 / total_time) + 3.1546) // 1)
-        if pan_speed <= self.MIN_PAN_SPEED:
-            return self.MIN_PAN_SPEED
-        elif pan_speed >= self.MAX_PAN_SPEED:
-            return self.MAX_PAN_SPEED
+        if pan_speed <= self.qpt.MIN_PAN_SPEED:
+            return self.qpt.MIN_PAN_SPEED
+        elif pan_speed >= self.qpt.MAX_PAN_SPEED:
+            return self.qpt.MAX_PAN_SPEED
         return int(pan_speed)
 
 
     def compute_tilt_speed(self, total_time):
         tilt_speed = ((39.3701*(180.0 / total_time) + 6.8228) // 1)
-        if tilt_speed <= self.MIN_TILT_SPEED:
-            return self.MIN_TILT_SPEED
-        elif tilt_speed >= self.MAX_TILT_SPEED:
-            return self.MAX_TILT_SPEED
+        if tilt_speed <= self.qpt.MIN_TILT_SPEED:
+            return self.qpt.MIN_TILT_SPEED
+        elif tilt_speed >= self.qpt.MAX_TILT_SPEED:
+            return self.qpt.MAX_TILT_SPEED
         return int(tilt_speed)
 """End meas_ctrl Class"""
 
