@@ -1,3 +1,19 @@
+################################################################################
+#
+#  Description:
+#  
+#
+#  Status:
+#
+#
+#  Dependencies:
+#      PyVISA Version: 1.10.1
+#
+#  Author: Eric Li, Thomas Hoover
+#  Date: 20200806
+#  Built with Python Version: 3.8.5
+#
+################################################################################
 import vna.vna_comms as vna_comms
 import qpt.positioner as positioner
 from qpt.integer import Coordinate
@@ -58,14 +74,14 @@ class meas_ctrl:
         if self.sweep_mode == 'continuous': # check if a continuous sweep is possible
             if self.exe_mode == 'pan':
                 total_time = (self.vna_avg_delay + self.vna_S21_delay) * 360 / self.resolution
-                if total_time > self.MAX_PAN_TIME:
+                if total_time > self.qpt.MAX_PAN_TIME:
                     self.sweep_mode = 'step'
                     self.pan_speed = 0
                 else:
                     self.pan_speed = self.compute_pan_speed(total_time)
             else:
                 total_time = (self.vna_avg_delay + self.vna_S21_delay) * 180 / self.resolution
-                if total_time > self.MAX_TILT_TIME:
+                if total_time > self.qpt.MAX_TILT_TIME:
                     self.sweep_mode = 'step'
                     self.tilt_speed = 0
                 else:
@@ -82,7 +98,7 @@ class meas_ctrl:
         if self.sweep_mode == 'step':
             # Pan Case
             if self.exe_mode == 'pan':
-                for i in range(0, int(360/self.resolution) + 1):
+                for i in range(0, int(360/self.resolution)):
                     self.step_delay()
                     self.record_data('S21', self.file)
                     self.progress = (i+1) * self.resolution / 360
@@ -93,7 +109,7 @@ class meas_ctrl:
                         self.qpt.move_to(target, self.const_angle, 'abs')
             # Tilt Case
             else:
-                for i in range(0, int(180/self.resolution) + 1):
+                for i in range(0, int(180/self.resolution)):
                     self.step_delay()
                     self.record_data('S21', self.file)
                     self.progress = (i+1) * self.resolution / 180
@@ -108,7 +124,7 @@ class meas_ctrl:
             # Pan Case
             if self.exe_mode == 'pan':
                 self.init_continuous_sweep()
-                for i in range(0, int(360/self.resolution) + 1):
+                for i in range(0, int(360/self.resolution)):
                     lock = self.init_continuous_lock()
                     target = ((i+1) * self.resolution) - 180
                     curr = self.qpt.get_position()
@@ -127,7 +143,7 @@ class meas_ctrl:
             # Tilt Case
             else:
                 self.init_continuous_sweep()
-                for i in range(0, int(180/self.resolution) + 1):
+                for i in range(0, int(180/self.resolution)):
                     lock = self.init_continuous_lock()
                     target = ((i+1) * self.resolution) - 90
                     curr = self.qpt.get_position()
@@ -213,49 +229,49 @@ class meas_ctrl:
         if isinstance(self.freq, list):
             if len(self.freq) <= 5:
                 if self.avg <= 8:
-                    return [2.19, 2.13, 1.28]
-                return [3.98, 2.13, 1.28]
+                    return [2.19, 1.202, 1.26]
+                return [3.98, 1.202, 1.26]
             elif len(self.freq) <= 10:
                 if self.avg <= 8:
-                    return [3.02, 2.34, 1.36]
-                return [5.80, 2.34, 1.36]
+                    return [3.02, 1.296, 1.35]
+                return [5.80, 1.296, 1.35]
             elif len(self.freq) <= 15:
                 if self.avg <= 8:
-                    return [3.11, 2.46, 1.46]
-                return [5.95, 2.46, 1.46]
+                    return [3.11, 1.36, 1.42]
+                return [5.95, 1.36, 1.42]
             elif len(self.freq) <= 20:
                 if self.avg <= 8:
-                    return [3.36, 2.60, 1.61]
-                return [6.48, 2.60, 1.61]
+                    return [3.36, 1.417, 1.489]
+                return [6.48, 1.417, 1.489]
             elif len(self.freq) <= 25:
                 if self.avg <= 8:
-                    return [3.26, 2.75, 1.60]
-                return [6.35, 2.75, 1.60]
+                    return [3.26, 1.477, 1.547]
+                return [6.35, 1.477, 1.547]
             else:
                 if self.avg <= 8:
-                    return [3.58, 2.79, 1.69]
-                return [6.76, 2.79, 1.69]
+                    return [3.58, 1.52, 1.61]
+                return [6.76, 1.52, 1.61]
         else:
             if self.freq.points <= 201:
                 if self.avg <= 8:
-                    return [3.79, 3.60, 2.54]
-                return [7.30, 3.60, 2.54]
+                    return [3.79, 1.71, 2.03]
+                return [7.30, 1.71, 2.03]
             elif self.freq.points <= 401:
                 if self.avg <= 8:
-                    return [4.23, 5.04, 3.76]
-                return [7.99, 5.04, 3.76]
+                    return [4.23, 2.15, 2.73]
+                return [7.99, 2.15, 2.73]
             elif self.freq.points <= 801:
                 if self.avg <= 8:
-                    return [5.49, 7.86, 6.24]
-                return [10.39, 7.86, 6.24]
+                    return [5.49, 3.01, 4.09]
+                return [10.39, 3.01, 4.09]
             elif self.freq.points <= 1601:
                 if self.avg <= 8:
-                    return [8.51, 13.57, 11.02]
-                return [16.06, 13.57, 11.02]
+                    return [8.51, 4.72, 6.74]
+                return [16.06, 4.72, 6.74]
 
 
     def compute_pan_speed(self, total_time):
-        pan_speed = ((12.8866*(360.0 / total_time) + 3.1546) // 1)
+        pan_speed = int((12.8866*(360.0 / total_time) + 3.1546))
         if pan_speed <= self.qpt.MIN_PAN_SPEED:
             return self.qpt.MIN_PAN_SPEED
         elif pan_speed >= self.qpt.MAX_PAN_SPEED:
@@ -264,7 +280,7 @@ class meas_ctrl:
 
 
     def compute_tilt_speed(self, total_time):
-        tilt_speed = ((39.3701*(180.0 / total_time) + 6.8228) // 1)
+        tilt_speed = int((39.3701*(180.0 / total_time) + 6.8228))
         if tilt_speed <= self.qpt.MIN_TILT_SPEED:
             return self.qpt.MIN_TILT_SPEED
         elif tilt_speed >= self.qpt.MAX_TILT_SPEED:
