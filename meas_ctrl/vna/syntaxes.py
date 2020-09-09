@@ -3,7 +3,8 @@ from enum import Enum, auto
 
 class Action(Enum):
     RESET = auto()
-    FORM4 = auto()
+    FORM2 = auto()
+    EDIT_LIST = auto()
     ADD_LIST_FREQ = auto()
     LIST_FREQ_MODE = auto()
     CLEAR_LIST = auto()
@@ -21,7 +22,7 @@ class Action(Enum):
     POLAR_LOG_MARKER = auto()
     AUTO_SCALE = auto()
     DATA_TO_MEM = auto()
-    DISPLAY_MEM = auto()
+    DISPLAY_DATA_AND_MEM = auto()
     OUTPUT_FORMATTED_DATA = auto()
     CAL_S11_1_PORT = auto()
     CAL_S11_1_PORT_OPEN = auto()
@@ -45,8 +46,10 @@ def check_model(string):
 def find_command(model, action, arg=0):
     if action == Action.RESET:
         return reset(model)
-    elif action == Action.FORM4:
-        return form4(model)
+    elif action == Action.FORM2:
+        return form2(model)
+    elif action == Action.EDIT_LIST:
+        return edit_list(model)
     elif action == Action.ADD_LIST_FREQ:
         return add_list_freq(model, arg)
     elif action == Action.LIST_FREQ_MODE:
@@ -81,8 +84,8 @@ def find_command(model, action, arg=0):
         return auto_scale(model)
     elif action == Action.DATA_TO_MEM:
         return data_to_mem(model)
-    elif action == Action.DISPLAY_MEM:
-        return display_mem(model)
+    elif action == Action.DISPLAY_DATA_AND_MEM:
+        return display_data_and_mem(model)
     elif action == Action.OUTPUT_FORMATTED_DATA:
         return output_formatted_data(model)
     elif action == Action.CAL_S11_1_PORT:
@@ -101,6 +104,7 @@ def find_command(model, action, arg=0):
         raise Exception('Invalid action, find_command() does the recognize the action: {}'.format(action))
 
 
+# this action should perform a full reset on the VNA
 def reset(model):
     commands = {
         Model.HP_8753D: 'PRES',
@@ -108,20 +112,33 @@ def reset(model):
     return commands.get(model)
 
 
-def form4(model):
+# this action should set the array data from the VNA to be transferred in ASCII floating point format
+def form2(model):
     commands = {
-        Model.HP_8753D: 'FORM4',
+        Model.HP_8753D: 'FORM2',
     }
     return commands.get(model)
 
 
+# this action should prompt VNA to edit the list frequency table
+def edit_list(model):
+    commands = {
+        Model.HP_8753D: 'EDITLIST',
+    }
+    return commands.get(model)
+
+
+# this action should contain 3 steps:
+# 1. Add a new segment
+# 2. Modify the center frequency of the segment
+# 3. Done with segment
 def add_list_freq(model, arg):
     argument_valid = {
         Model.HP_8753D: arg * 10 ** 3 in range(30000, 6 * 10 ** 9 + 1),
     }
 
     commands = {
-        Model.HP_8753D: 'EDITLIST; SADD; CENT {} KHZ; SDON'.format(arg),
+        Model.HP_8753D: 'SADD; CENT {} KHZ; SDON'.format(arg),
     }
     if argument_valid.get(model):
         return commands.get(model)
@@ -129,6 +146,7 @@ def add_list_freq(model, arg):
         raise Exception('The frequency is not in the valid range: {} MHz'.format(arg))
 
 
+# this action should select the list frequency sweep mode
 def list_freq_mode(model):
     commands = {
         Model.HP_8753D: 'LISFREQ',
@@ -136,6 +154,7 @@ def list_freq_mode(model):
     return commands.get(model)
 
 
+# this action should clear the selected list
 def clear_list(model):
     commands = {
         Model.HP_8753D: 'CLEL',
@@ -143,6 +162,7 @@ def clear_list(model):
     return commands.get(model)
 
 
+# this action should set the start frequency for a linear frequency sweep
 def lin_freq_start(model, arg):
     argument_valid = {
         Model.HP_8753D: arg * 10 ** 3 in range(30000, 6 * 10 ** 9),
@@ -157,6 +177,7 @@ def lin_freq_start(model, arg):
         raise Exception('The frequency is not in the valid range: {} MHz'.format(arg / 1000))
 
 
+# this action should set the stop frequency for a linear frequency sweep
 def lin_freq_end(model, arg):
     argument_valid = {
         Model.HP_8753D: arg * 10 ** 3 in range(30000, 6 * 10 ** 9 + 1),
@@ -171,6 +192,7 @@ def lin_freq_end(model, arg):
         raise Exception('The frequency is not in the valid range: {} MHz'.format(arg / 1000))
 
 
+# this action should set the number of points for a linear frequency sweep
 def lin_freq_points(model, arg):
     argument_valid = {
         Model.HP_8753D: arg in range(1, 1633),
@@ -185,6 +207,7 @@ def lin_freq_points(model, arg):
         raise Exception('The number of points for the linear frequency sweep is invalid: {}'.format(arg))
 
 
+# this action should select the linear frequency sweep mode
 def lin_freq_mode(model):
     commands = {
         Model.HP_8753D: 'LINFREQ',
@@ -192,6 +215,7 @@ def lin_freq_mode(model):
     return commands.get(model)
 
 
+# this action should set the averaging factor
 def avg_factor(model, arg):
     argument_valid = {
         Model.HP_8753D: arg in range(1, 1000),
@@ -206,6 +230,7 @@ def avg_factor(model, arg):
         raise Exception('The averaging factor is invalid: {}'.format(arg))
 
 
+# this action should turn ON averaging.
 def avg_on(model):
     commands = {
         Model.HP_8753D: 'AVERO1',
@@ -213,6 +238,7 @@ def avg_on(model):
     return commands.get(model)
 
 
+# this action should restart the averaging
 def avg_reset(model):
     commands = {
         Model.HP_8753D: 'AVERREST',
@@ -220,6 +246,7 @@ def avg_reset(model):
     return commands.get(model)
 
 
+# this action should set the IF bandwidth
 def if_bw(model, arg):
     argument_valid = {
         Model.HP_8753D: arg == 10 or arg == 30 or arg == 100 or arg == 300 or arg == 1000 or arg == 3000 or arg == 3700,
@@ -234,6 +261,7 @@ def if_bw(model, arg):
         raise Exception('The IF bandwidth value is invalid: {} Hz'.format(arg))
 
 
+# this action should select S21 for the active channel
 def s21(model):
     commands = {
         Model.HP_8753D: 'S21',
@@ -241,6 +269,7 @@ def s21(model):
     return commands.get(model)
 
 
+# this action should select S11 for the active channel
 def s11(model):
     commands = {
         Model.HP_8753D: 'S11',
@@ -248,6 +277,7 @@ def s11(model):
     return commands.get(model)
 
 
+# this action should select the polar display format
 def polar(model):
     commands = {
         Model.HP_8753D: 'POLA'
@@ -255,6 +285,7 @@ def polar(model):
     return commands.get(model)
 
 
+# this action should select log markers as the readout format for polar display
 def polar_log_marker(model):
     commands = {
         Model.HP_8753D: 'POLMLOG'
@@ -262,6 +293,7 @@ def polar_log_marker(model):
     return commands.get(model)
 
 
+# this action should auto scale the active channel
 def auto_scale(model):
     commands = {
         Model.HP_8753D: 'AUTO',
@@ -269,6 +301,7 @@ def auto_scale(model):
     return commands.get(model)
 
 
+# this action should store the trace in channel memory
 def data_to_mem(model):
     commands = {
         Model.HP_8753D: 'DATI',
@@ -276,13 +309,16 @@ def data_to_mem(model):
     return commands.get(model)
 
 
-def display_mem(model):
+# this action should display both data and memory of the active channel
+def display_data_and_mem(model):
     commands = {
         Model.HP_8753D: 'DISPDATM',
     }
     return commands.get(model)
 
 
+# this action should output the formatted trace data the active channel
+# because data is in polar for this project, returned data should be real-imaginary pairs
 def output_formatted_data(model):
     commands = {
         Model.HP_8753D: 'OUTPFORM',
@@ -290,6 +326,7 @@ def output_formatted_data(model):
     return commands.get(model)
 
 
+# this action should begin an S11 1-port calibration sequence
 def cal_s11_1_port(model):
     commands = {
         Model.HP_8753D: 'CALIS111',
@@ -297,6 +334,7 @@ def cal_s11_1_port(model):
     return commands.get(model)
 
 
+# this action should select the open class
 def cal_s11_1_port_open(model):
     commands = {
         Model.HP_8753D: 'CLASS11A',
@@ -304,6 +342,7 @@ def cal_s11_1_port_open(model):
     return commands.get(model)
 
 
+# this action should select the short class
 def cal_s11_1_port_short(model):
     commands = {
         Model.HP_8753D: 'CLASS11B',
@@ -311,6 +350,7 @@ def cal_s11_1_port_short(model):
     return commands.get(model)
 
 
+# this action should select the load class
 def cal_s11_1_port_load(model):
     commands = {
         Model.HP_8753D: 'CLASS11C',
@@ -318,6 +358,7 @@ def cal_s11_1_port_load(model):
     return commands.get(model)
 
 
+# this action should complete the 1-port calibration sequence
 def save_1_port_cal(model):
     commands = {
         Model.HP_8753D: 'SAV1',
@@ -325,6 +366,7 @@ def save_1_port_cal(model):
     return commands.get(model)
 
 
+# this action should turn error correction ON
 def correction_on(model):
     commands = {
         Model.HP_8753D: 'CORRON',
