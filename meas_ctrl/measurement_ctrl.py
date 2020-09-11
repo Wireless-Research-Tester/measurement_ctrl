@@ -27,7 +27,7 @@ class meas_ctrl:
     def __init__(
             self,
             settings='pivot.json',
-            file='data\\data0.csv'):
+            data_file='data\\data0.csv'):
         
         with open(settings) as file:
             args = json.load(file)
@@ -53,7 +53,7 @@ class meas_ctrl:
         self.pan_speed = 0
         self.tilt_speed = 0
         self.vna_lock = Lock()
-        self.file = file
+        self.file = data_file
 
     def setup(self):
         if self.exe_mode == 'pan':

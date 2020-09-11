@@ -6,11 +6,11 @@
         "points": null
     },
 
-    "list":[],
+    "list":[1000, 3000],
 
-    "impedance":false,
+    "impedance":true,
 
-    "calibration":false,
+    "calibration":true,
 
     "averaging":8,
 
