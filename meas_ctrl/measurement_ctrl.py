@@ -20,32 +20,31 @@ from qpt.integer import Coordinate
 import data.data_storage as data_storage
 from time import sleep
 from threading import Lock, Thread
+import json
 
 
 class meas_ctrl:
     def __init__(
             self,
-            freq,
-            impedance=False,
-            cal=False, 
-            avg=8, 
-            sweep_mode='step', 
-            offset=0, 
-            exe_mode='pan', 
-            const_angle=0, 
-            resolution=5, 
+            settings='pivot.json',
             file='data\\data0.csv'):
-    
-        self.impedance = impedance # if true, S11 and S21 will be measured. Else, only S21
-        self.freq = freq # list or vna_comms.lin_freq obj
-        self.cal = cal # true or false
-        self.avg = avg # e.g. 8, 16, etc.
-        self.sweep_mode = sweep_mode # either 'continuous' or 'step'
-        self.offset = offset        
-        self.exe_mode = exe_mode # 'pan' for pan sweep or 'tilt' for tilt sweep
-        self.const_angle = const_angle # angle at which non-changing coordinate is set to
-        self.resolution = resolution
-        self.vna = vna_comms.session('GPIB0::16::INSTR')
+        
+        with open(settings) as file:
+            args = json.load(file)
+            
+        self.impedance = args['impedance']  # if true, S11 and S21 will be measured. Else, only S21
+        if len(args['list']) != 0:          # list or vna_comms.lin_freq obj
+            self.freq = args['list']
+        else:
+            self.freq = vna_comms.lin_freq(args['linear']['start'], args['linear']['end'], args['linear']['points'])
+        self.cal = args['calibration'] # true or false
+        self.avg = args['averaging'] # e.g. 8, 16, etc.
+        self.sweep_mode = args['positioner_mv'] # either 'continuous' or 'step'
+        self.offset = args['offset']['pan']       
+        self.exe_mode = args['sweep_axis'] # 'pan' for pan sweep or 'tilt' for tilt sweep
+        self.const_angle = args['fixed_angle'] # angle at which non-changing coordinate is set to
+        self.resolution = args['resolution']
+        self.vna = vna_comms.session('GPIB0::' + str(args['gpib_addr']) + '::INSTR')
         self.qpt = positioner.Positioner()
         self.progress = 0 # percentage, e.g. 0.11 for 11%
         self.vna_avg_delay = 0
