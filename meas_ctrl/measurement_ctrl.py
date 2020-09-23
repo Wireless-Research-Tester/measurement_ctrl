@@ -158,7 +158,7 @@ class meas_ctrl:
                         break
                     else:
                         self.qpt.jog_up(self.tilt_speed, Coordinate(0,90))
-        data_storage.append_data(self.file, vna_comms.data('END', 'END', 'END', 'END', 'END', 'END')) 
+        data_storage.append_data(self.file, vna_comms.data('null', 'null', 'null', 'null', 'null', 'null')) 
 
 
     def halt(self):
