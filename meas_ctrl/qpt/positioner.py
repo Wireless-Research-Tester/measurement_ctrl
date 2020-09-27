@@ -17,24 +17,21 @@
 import time
 from threading import Lock
 import pyvisa as visa
-import qpt.integer as qi
-import qpt.packet as pkt
-from qpt.constants import BIT0, BIT1, BIT2, BIT3, BIT4, BIT5, BIT6, BIT7
-from qpt.packet_parser import Parser
+import integer as qi
+import packet as pkt
+from constants import BIT0, BIT1, BIT2, BIT3, BIT4, BIT5, BIT6, BIT7
+from packet_parser import Parser
 
 class Comms:
-    # _COMMS_PORT = 'ASRL1::INSTR'
-    # _COMMS_PORT = 'ASRL3::INSTR'
-    _COMMS_PORT = 'ASRL8::INSTR'
     _LIMIT = 25
 
-    def __init__(self):
+    def __init__(self, com_port, baud_rate):
         self.rm = visa.ResourceManager()
-        self.comms = self.rm.open_resource(self._COMMS_PORT)
+        self.comms = self.rm.open_resource(com_port)
         self.comms.read_termination = b'\x03'
         self.comms.write_termination = b'\x03'
         self.comms.timeout = 30
-        self.comms.baud_rate = 9600
+        self.comms.baud_rate = baud_rate
         self.comms.stop_bites = visa.constants.StopBits.one
         self.comms.parity = visa.constants.Parity.none
         self.comms.data_bits = 8
@@ -70,8 +67,8 @@ class Comms:
 
 
 class Positioner:
-    def __init__(self):
-        self.comms = Comms()
+    def __init__(self, com_port, baud_rate):
+        self.comms = Comms(com_port, baud_rate)
         self.p = Parser()
         self.curr_lock = Lock()
 
